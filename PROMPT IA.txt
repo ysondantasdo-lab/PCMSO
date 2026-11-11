@@ -1,0 +1,14 @@
+Como um programador experiente em javascript me ajude.
+O programa será feito em javascript usando o Node.js.
+Eu quero fazer um programa usando o VSCode como editor de códico.
+Estou com o Node.js instlado em minha máquina.
+Eu não tenho o Excel instalado no meu computador somento o libreoffice.
+Este programa é da área de Segurança do Trabalho. Ele deve pegar as informações em uma planilha do excel que são os dados dos riscos do PGR e organizar as informações em uma planliha no LibrOffice Calc para faciliar para a médica do trabalho fazer o PCMSO. 
+O que o programa deve fazer:
+O programa deve ler as informações em uma planilha no excel que será indicada pelo usuário através de uma janela para informar local do arquivo.
+As informações lidas são as que estão nas colunas com cabeçalho: A (ÓGÃO / SECRETARIA), B ( SETOR/LOTAÇÃO), D (CARGO/FUNÇÃO), H (DESCRIÇÃO CARGO/FUNÇÃO), I (AGENTES / RISCOS AMBIENTAIS), J (FATOR DE RISCO AMBIENTAL), K (FONTE GERADORA), M(DANOS A SAUDE), N(TIPO DE EXPOSIÇÃO).
+Este programa obter e organizar os dados obtidos nas colunas mencionadas.
+O objetivo de organizacão dos dados é encontrar e agrupar os grupos homogêneos de exposição aos riscos, pois o PCMSO indica exames iguais para as pessoas que estão expostas aos mesmos riscos.
+Agrupamento:
+O agrupamento deve ser inicialmente pela coluna  A (ÓGÃO / SECRETARIA), ou seja pessoas de secretarias diferentes deve entrar em outra lista.
+Em seguida agrupamento pela coluna  B ( SETOR/LOTAÇÃO), 
