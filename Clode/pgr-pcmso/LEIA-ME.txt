@@ -1,0 +1,8 @@
+PGR -> PCMSO (grupos homogêneos de exposição)
+
+1) Abra a pasta no VSCode e, no terminal (Ctrl+'), rode UMA vez:   npm install
+2) Para executar:   npm start      (abre a janela para escolher a planilha)
+   Ou direto:       node index.js "C:\caminho\planilha.xlsx"
+3) O resultado é salvo na mesma pasta da planilha: <nome>_GH_PCMSO.xlsx (e .ods).
+
+Ajustes (critério do GH, caminho do LibreOffice etc.): src/config.js
