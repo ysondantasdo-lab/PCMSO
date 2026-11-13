@@ -24,7 +24,7 @@ module.exports = {
   chavesGH: ['agente', 'exposicao'],
 
   // Linhas "AUSÊNCIA DE FATORES DE RISCO" não entram em GH; vão para outra aba.
-  prefixoSemRisco: 'AUSENCIA',
+  prefixoSemRisco: null,
 
   // Para a leitura de .ods/.xls o programa usa o LibreOffice para converter.
   // Se ele não for encontrado automaticamente, coloque o caminho aqui:

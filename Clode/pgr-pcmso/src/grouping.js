@@ -33,10 +33,10 @@ function agrupar(linhas) {
 
   for (const l of linhas) {
     const ag = normalizar(l.agente);
-    if (!ag) revisar.push(l);                                   // sem agente informado
-    else if (ag.startsWith(config.prefixoSemRisco)) semRisco.push(l);
-    else comRisco.push(l);
+    if (!ag) revisar.push(l); // sem agente informado
+    else comRisco.push(l);     // agora "AUSÊNCIA" entra aqui junto com os demais riscos
   }
+
 
   // Cria os GH na ordem em que aparecem.
   const grupos = new Map();
