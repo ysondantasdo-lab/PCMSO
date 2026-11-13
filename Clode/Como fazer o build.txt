@@ -1,0 +1,10 @@
+Como fazer o build
+Extraia o zip e abra a pasta no VSCode.
+No terminal: npm install.
+Depois: npm run build.
+O arquivo sai em dist\PGR-PCMSO.exe.
+Teste primeiro na sua máquina, de preferência copiando o .exe sozinho para outra pasta.
+
+Para a usuária, entregue só o PGR-PCMSO.exe e, se quiser, o LEIA-ME-USUARIO.txt.
+
+Se quiser, posso adicionar uma aba “Avisos” na planilha de resultado. Hoje os avisos aparecem só na caixa final, limitados a 8, e o restante fica no log em %TEMP%\pgr-pcmso.log, que ela não costuma ver.

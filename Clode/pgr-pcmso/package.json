@@ -4,12 +4,16 @@
   "description": "Lê a planilha de riscos do PGR e gera planilha com Grupos Homogêneos de Exposição (GH) para o PCMSO",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "node build.js",
+    "build:debug": "node build.js --console"
   },
   "license": "ISC",
   "dependencies": {
-    "exceljs": "^4.4.0",
-    "jszip": "^3.10.2",
-    "saxes": "^6.0.0"
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "postject": "^1.0.0-alpha.6"
   }
 }

@@ -1,0 +1,14 @@
+COMO USAR — PGR para PCMSO
+
+1) Dê dois cliques em  PGR-PCMSO.exe
+   (ou arraste a planilha do PGR e solte em cima do ícone do programa).
+2) Escolha a planilha do PGR (.xlsx ou .ods) e clique em Abrir.
+3) Aguarde a janela "Processando...". Quando terminar, aparece um resumo.
+   Clique em "Sim" para abrir o resultado no Calc.
+
+O resultado é salvo na MESMA pasta da planilha original, com o nome
+  <nome da planilha>_GH_PCMSO.ods   (e também .xlsx)
+
+Importante: feche o arquivo de resultado no Calc antes de rodar de novo.
+Se o Windows avisar "protegeu seu computador": clique em "Mais informações" e depois em "Executar assim mesmo".
+Se aparecer alguma mensagem de erro, anote o texto e informe quem desenvolveu o programa.

@@ -1,8 +1,18 @@
-PGR -> PCMSO (grupos homogêneos de exposição)
+PGR -> PCMSO (grupos homogêneos de exposição) — para quem desenvolve
 
-1) Abra a pasta no VSCode e, no terminal (Ctrl+'), rode UMA vez:   npm install
-2) Para executar:   npm start      (abre a janela para escolher a planilha)
+DESENVOLVIMENTO
+1) No terminal do VSCode, dentro desta pasta, rode UMA vez:   npm install
+2) Para executar:   npm start       (abre a janela para escolher a planilha)
    Ou direto:       node index.js "C:\caminho\planilha.xlsx"
-3) O resultado é salvo na mesma pasta da planilha: <nome>_GH_PCMSO.xlsx (e .ods).
+   Para ver as mensagens no terminal em vez de só nas caixas: defina PGR_DEBUG=1
 
-Ajustes (critério do GH, caminho do LibreOffice etc.): src/config.js
+GERAR O .EXE (para a usuária final)
+   npm run build            -> dist\PGR-PCMSO.exe  (sem janela preta)
+   npm run build:debug      -> dist\PGR-PCMSO.exe  (com janela preta, para investigar problemas)
+Entregue somente o PGR-PCMSO.exe (junto com o arquivo LEIA-ME-USUARIO.txt, se quiser).
+Precisa de Node.js 20 ou superior na SUA máquina; a usuária não precisa de nada além do LibreOffice.
+
+AJUSTES (critério do GH, caminho do LibreOffice etc.): src/config.js
+
+LOG: cada execução grava %TEMP%\pgr-pcmso.log (útil para investigar erros na máquina da usuária).
+O caminho do LibreOffice informado manualmente fica em %APPDATA%\PGR-PCMSO\config.json.

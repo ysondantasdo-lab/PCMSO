@@ -1,5 +1,6 @@
 const { execFileSync } = require('child_process');
 const readline = require('readline');
+const ui = require('./ui');
 
 const FILTRO = 'Planilhas (*.xlsx;*.xlsm;*.ods;*.xls)|*.xlsx;*.xlsm;*.ods;*.xls|Todos os arquivos (*.*)|*.*';
 
@@ -8,18 +9,6 @@ function tentar(cmd, args) {
     const out = execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     return out.replace(/[\r\n]+$/, '').trim() || null;
   } catch { return null; }
-}
-
-function janelaWindows() {
-  const script = `
-Add-Type -AssemblyName System.Windows.Forms
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$f = New-Object System.Windows.Forms.OpenFileDialog
-$f.Title = 'Selecione a planilha do PGR'
-$f.Filter = '${FILTRO}'
-if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.FileName }`;
-  const b64 = Buffer.from(script, 'utf16le').toString('base64');
-  return tentar('powershell', ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', b64]);
 }
 
 function janelaMac() {
@@ -31,7 +20,9 @@ function janelaLinux() {
       || tentar('kdialog', ['--getopenfilename', '.', '*.xlsx *.xlsm *.ods *.xls']);
 }
 
+// Só usado no desenvolvimento (terminal). No .exe não existe terminal.
 function perguntarNoTerminal() {
+  if (!process.stdin || !process.stdin.isTTY) return Promise.resolve(null);
   return new Promise(resolve => {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     rl.question('Digite o caminho completo da planilha do PGR: ', r => {
@@ -41,11 +32,11 @@ function perguntarNoTerminal() {
   });
 }
 
+// Devolve o caminho escolhido, ou null se a pessoa cancelou.
+// No Windows, LANÇA ERRO se a janela não puder ser aberta (ex.: PowerShell bloqueado).
 async function escolherArquivo() {
-  let arq = null;
-  if (process.platform === 'win32') arq = janelaWindows();
-  else if (process.platform === 'darwin') arq = janelaMac();
-  else arq = janelaLinux();
+  if (process.platform === 'win32') return ui.selecionarArquivo('Selecione a planilha do PGR', FILTRO) || null;
+  const arq = process.platform === 'darwin' ? janelaMac() : janelaLinux();
   return arq || perguntarNoTerminal();
 }
 
