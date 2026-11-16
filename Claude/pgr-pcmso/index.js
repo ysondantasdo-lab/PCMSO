@@ -27,6 +27,26 @@ function mensagemAmigavel(e) {
 async function main() {
   ui.reiniciarLog();
 
+    // 0) Quantas linhas o cabeçalho ocupa (começa na linha 2). Perguntado ANTES de escolher o arquivo.
+  if (ui.win) {
+    let linhasCab;
+    try {
+      linhasCab = ui.pedirNumero(
+        'PGR → PCMSO',
+        'Quantas linhas o CABEÇALHO da planilha ocupa?\n\n' +
+        'Conte as linhas do cabeçalho (mescladas) a partir da linha 2.\n' +
+        'Exemplo: cabeçalho indo da linha 2 até a linha 4 = 3 linhas.',
+        config.linhasCabecalhoPadrao, 1, config.linhasCabecalhoMax);
+    } catch (e) {
+      ui.log('Janela de número de linhas falhou:', e.message);
+      ui.erro('Não consegui abrir a janela para informar as linhas do cabeçalho.');
+      return 1;
+    }
+    if (linhasCab === null) return 0; // cancelou: encerra sem barulho
+    config.linhaInicioDados = config.linhasReservadas + linhasCab;
+    ui.log(`Cabeçalho: ${linhasCab} linha(s); dados a partir da linha ${config.linhaInicioDados}.`);
+  }
+
   // 1) Arquivo: arrastado sobre o programa ou escolhido na janela
   let entrada = arquivoDosArgumentos();
   if (!entrada) {

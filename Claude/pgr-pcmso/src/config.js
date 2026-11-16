@@ -14,8 +14,14 @@ module.exports = {
     { chave: 'exposicao', coluna: 'N',          titulo: 'TIPO DE EXPOSIÇÃO',           largura: 16 },
   ],
 
-    // O cabeçalho ocupa das linhas 2 a 4 (mescladas), então os dados começam na linha 5
-  linhaInicioDados: 5, 
+  // A linha 1 é sempre reservada para a logomarca.
+  // Primeira linha de dados = (linhas do cabeçalho informadas pelo usuário) + 2.
+  linhasReservadas: 2,        // 1 (logomarca) + 1 (para chegar na linha seguinte ao cabeçalho)
+  linhasCabecalhoPadrao: 3,   // valor sugerido na caixa
+  linhasCabecalhoMax: 20,     // limite aceito na caixa
+
+  // Preenchido em tempo de execução pelo index.js.
+  linhaInicioDados: 5,
 
   // Critério do Grupo Homogêneo: linhas com os mesmos valores nestas colunas.
   // Pedido original: agente (coluna I) + tipo de exposição (coluna N).

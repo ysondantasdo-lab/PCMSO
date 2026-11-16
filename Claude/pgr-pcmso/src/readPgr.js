@@ -1,6 +1,6 @@
 const ExcelJS = require('exceljs');
 const config = require('./config');
-const { normalizar, textoCelula } = require('./util');
+const { textoCelula } = require('./util');
 
 async function lerPlanilha(arquivoXlsx) {
   const wb = new ExcelJS.Workbook();
@@ -36,9 +36,7 @@ function extrair(ws) {
       continue;
     }
 
-    // Ignora linhas caso o cabeçalho se repita no meio da tabela
-    const orgaoNorm = normalizar(reg.orgao);
-    if (orgaoNorm.includes('ORGAO') || orgaoNorm.includes('OGAO')) continue;
+
 
     vazias = 0;
     linhas.push(reg);
@@ -48,7 +46,7 @@ function extrair(ws) {
     throw new Error(`Nenhum dado encontrado na aba "${ws.name}" a partir da linha ${linhaInicial}.`);
   }
 
-  return { aba: ws.name, linhaCabecalho: 2, linhas };
+  return { aba: ws.name, linhaCabecalho: config.linhaInicioCabecalho || 2, linhas };
 }
 
 module.exports = { lerPlanilha };

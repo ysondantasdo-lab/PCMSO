@@ -126,8 +126,49 @@ function abrirArquivo(arquivo) {
   catch (e) { log('Não foi possível abrir o arquivo:', e.message); }
 }
 
+// ---------- pergunta de número ----------
+// Janela com campo numérico e botões OK / Cancelar.
+// Devolve o número (inteiro) ou null se a pessoa cancelou. LANÇA ERRO se a janela não puder abrir.
+function pedirNumero(titulo, mensagem, padrao, minimo, maximo) {
+  const r = powershell(`
+$f = New-Object System.Windows.Forms.Form
+$f.Text = ${txt(titulo)}
+$f.ClientSize = New-Object System.Drawing.Size(420, 190)
+$f.StartPosition = 'CenterScreen'
+$f.FormBorderStyle = 'FixedDialog'
+$f.MaximizeBox = $false
+$f.MinimizeBox = $false
+$f.TopMost = $true
+$l = New-Object System.Windows.Forms.Label
+$l.Text = ${txt(mensagem)}
+$l.Location = New-Object System.Drawing.Point(15, 15)
+$l.Size = New-Object System.Drawing.Size(390, 85)
+$n = New-Object System.Windows.Forms.NumericUpDown
+$n.Minimum = ${Number(minimo)}
+$n.Maximum = ${Number(maximo)}
+$n.Value = ${Number(padrao)}
+$n.Location = New-Object System.Drawing.Point(15, 110)
+$n.Size = New-Object System.Drawing.Size(80, 24)
+$ok = New-Object System.Windows.Forms.Button
+$ok.Text = 'OK'
+$ok.Location = New-Object System.Drawing.Point(230, 145)
+$ok.Size = New-Object System.Drawing.Size(85, 28)
+$ok.DialogResult = [System.Windows.Forms.DialogResult]::OK
+$cancelar = New-Object System.Windows.Forms.Button
+$cancelar.Text = 'Cancelar'
+$cancelar.Location = New-Object System.Drawing.Point(325, 145)
+$cancelar.Size = New-Object System.Drawing.Size(85, 28)
+$cancelar.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+$f.Controls.AddRange(@($l, $n, $ok, $cancelar))
+$f.AcceptButton = $ok
+$f.CancelButton = $cancelar
+if ($f.ShowDialog($o) -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output ([int]$n.Value) }`);
+  const v = parseInt(r, 10);
+  return Number.isFinite(v) ? v : null;
+}
+
 module.exports = {
   win, log, reiniciarLog, ARQUIVO_LOG,
   caixa, info, aviso, erro, perguntar,
-  abrirProcessando, selecionarArquivo, abrirArquivo,
+  abrirProcessando, selecionarArquivo, abrirArquivo, pedirNumero,
 };
