@@ -53,6 +53,7 @@ async function main() {
     try {
       entrada = await escolherArquivo();
     } catch (e) {
+      ui.log('Seleção retornou:', entrada || '(vazio / cancelado)');
       ui.log('Janela de seleção falhou:', e.message);
       ui.erro('Não consegui abrir a janela de seleção de arquivo.\n\n' +
               'Alternativa: arraste a planilha do PGR e solte em cima do ícone deste programa.');

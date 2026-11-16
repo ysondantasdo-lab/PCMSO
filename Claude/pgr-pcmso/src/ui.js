@@ -33,6 +33,11 @@ Add-Type -AssemblyName System.Drawing
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $o = New-Object System.Windows.Forms.Form
 $o.TopMost = $true
+$o.ShowInTaskbar = $false
+$o.Opacity = 0
+$o.StartPosition = 'CenterScreen'
+$o.Show()
+$o.Activate()
 `;
 
 const ARGS_PS = ['-NoProfile', '-NonInteractive', '-STA', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-EncodedCommand'];
@@ -41,8 +46,9 @@ const codificar = script => Buffer.from(script, 'utf16le').toString('base64');
 // Executa e devolve o texto de saída. LANÇA ERRO se o PowerShell falhar/estiver bloqueado.
 function powershell(script) {
   const r = spawnSync('powershell.exe', [...ARGS_PS, codificar(PS_BASE + script)],
-    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, timeout: 5 * 60 * 1000 });
   if (r.error) throw r.error;
+  log('[ps] código:', r.status, '| saída:', String(r.stdout || '').trim(), '| erro:', String(r.stderr || '').trim());
   if (r.status !== 0) {
     throw new Error('PowerShell terminou com código ' + r.status + ': ' + String(r.stderr || '').trim());
   }
