@@ -39,27 +39,36 @@ var require_config = __commonJS({
       // Cabeçalhos a serem lidos (o programa procura pelo TEXTO do cabeçalho,
       // então não depende da letra da coluna). Ordem = ordem das colunas na saída.
       colunas: [
-        { chave: "orgao", cabecalho: "\xD3RG\xC3O / SECRETARIA", titulo: "\xD3RG\xC3O / SECRETARIA", largura: 16 },
-        { chave: "setor", cabecalho: "SETOR/LOTA\xC7\xC3O", titulo: "SETOR/LOTA\xC7\xC3O", largura: 28 },
-        { chave: "cargo", cabecalho: "CARGO/FUN\xC7\xC3O", titulo: "CARGO/FUN\xC7\xC3O", largura: 32 },
-        { chave: "descricao", cabecalho: "DESCRI\xC7\xC3O CARGO/FUN\xC7\xC3O", titulo: "DESCRI\xC7\xC3O CARGO/FUN\xC7\xC3O", largura: 50 },
-        { chave: "agente", cabecalho: "AGENTES / RISCOS AMBIENTAIS", titulo: "AGENTES / RISCOS AMBIENTAIS", largura: 22 },
-        { chave: "fator", cabecalho: "FATOR DE RISCO AMBIENTAL", titulo: "FATOR DE RISCO AMBIENTAL", largura: 40 },
-        { chave: "fonte", cabecalho: "FONTE GERADORA", titulo: "FONTE GERADORA", largura: 24 },
-        { chave: "danos", cabecalho: "DANOS A SAUDE", titulo: "DANOS \xC0 SA\xDADE", largura: 40 },
-        { chave: "exposicao", cabecalho: "TIPO DE EXPOSI\xC7\xC3O", titulo: "TIPO DE EXPOSI\xC7\xC3O", largura: 16 }
+        { chave: "orgao", coluna: "A", titulo: "\xD3RG\xC3O / SECRETARIA", largura: 16 },
+        { chave: "setor", coluna: "B", titulo: "SETOR/LOTA\xC7\xC3O", largura: 28 },
+        { chave: "cargo", coluna: "D", titulo: "CARGO/FUN\xC7\xC3O", largura: 32 },
+        { chave: "descricao", coluna: "H", titulo: "DESCRI\xC7\xC3O CARGO/FUN\xC7\xC3O", largura: 50 },
+        { chave: "agente", coluna: "I", titulo: "AGENTES / RISCOS AMBIENTAIS", largura: 22 },
+        { chave: "fator", coluna: "J", titulo: "FATOR DE RISCO AMBIENTAL", largura: 40 },
+        { chave: "fonte", coluna: "K", titulo: "FONTE GERADORA", largura: 24 },
+        { chave: "danos", coluna: "M", titulo: "DANOS \xC0 SA\xDADE", largura: 40 },
+        { chave: "exposicao", coluna: "N", titulo: "TIPO DE EXPOSI\xC7\xC3O", largura: 16 }
       ],
+      // A linha 1 é sempre reservada para a logomarca.
+      // Primeira linha de dados = (linhas do cabeçalho informadas pelo usuário) + 2.
+      linhasReservadas: 2,
+      // 1 (logomarca) + 1 (para chegar na linha seguinte ao cabeçalho)
+      linhasCabecalhoPadrao: 3,
+      // valor sugerido na caixa
+      linhasCabecalhoMax: 20,
+      // limite aceito na caixa
+      // Preenchido em tempo de execução pelo index.js.
+      linhaInicioDados: 5,
       // Critério do Grupo Homogêneo: linhas com os mesmos valores nestas colunas.
       // Pedido original: agente (coluna I) + tipo de exposição (coluna N).
       // Se quiser separar também por fator de risco (ex.: ruído x calor), use:
       //   ['agente', 'exposicao', 'fator']
       chavesGH: ["agente", "exposicao"],
       // Linhas "AUSÊNCIA DE FATORES DE RISCO" não entram em GH; vão para outra aba.
-      prefixoSemRisco: "AUSENCIA",
+      prefixoSemRisco: null,
       // Para a leitura de .ods/.xls o programa usa o LibreOffice para converter.
       // Se ele não for encontrado automaticamente, coloque o caminho aqui:
-      caminhoSoffice: null,
-      // ex.: 'C:\\Program Files\\LibreOffice\\program\\soffice.exe'
+      caminhoSoffice: String.raw`c:\Program Files\LibreOffice\program\soffice.exe`,
       // Também salvar uma cópia .ods (formato nativo do Calc)?
       gerarOds: true,
       // Fim dos dados: para de ler após tantas linhas vazias seguidas.
@@ -206,6 +215,43 @@ if ($f.ShowDialog($o) -eq [System.Windows.Forms.DialogResult]::OK) { Write-Outpu
         log("N\xE3o foi poss\xEDvel abrir o arquivo:", e.message);
       }
     }
+    function pedirNumero(titulo, mensagem, padrao, minimo, maximo) {
+      const r = powershell(`
+$f = New-Object System.Windows.Forms.Form
+$f.Text = ${txt(titulo)}
+$f.ClientSize = New-Object System.Drawing.Size(420, 190)
+$f.StartPosition = 'CenterScreen'
+$f.FormBorderStyle = 'FixedDialog'
+$f.MaximizeBox = $false
+$f.MinimizeBox = $false
+$f.TopMost = $true
+$l = New-Object System.Windows.Forms.Label
+$l.Text = ${txt(mensagem)}
+$l.Location = New-Object System.Drawing.Point(15, 15)
+$l.Size = New-Object System.Drawing.Size(390, 85)
+$n = New-Object System.Windows.Forms.NumericUpDown
+$n.Minimum = ${Number(minimo)}
+$n.Maximum = ${Number(maximo)}
+$n.Value = ${Number(padrao)}
+$n.Location = New-Object System.Drawing.Point(15, 110)
+$n.Size = New-Object System.Drawing.Size(80, 24)
+$ok = New-Object System.Windows.Forms.Button
+$ok.Text = 'OK'
+$ok.Location = New-Object System.Drawing.Point(230, 145)
+$ok.Size = New-Object System.Drawing.Size(85, 28)
+$ok.DialogResult = [System.Windows.Forms.DialogResult]::OK
+$cancelar = New-Object System.Windows.Forms.Button
+$cancelar.Text = 'Cancelar'
+$cancelar.Location = New-Object System.Drawing.Point(325, 145)
+$cancelar.Size = New-Object System.Drawing.Size(85, 28)
+$cancelar.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+$f.Controls.AddRange(@($l, $n, $ok, $cancelar))
+$f.AcceptButton = $ok
+$f.CancelButton = $cancelar
+if ($f.ShowDialog($o) -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output ([int]$n.Value) }`);
+      const v = parseInt(r, 10);
+      return Number.isFinite(v) ? v : null;
+    }
     module2.exports = {
       win,
       log,
@@ -218,7 +264,8 @@ if ($f.ShowDialog($o) -eq [System.Windows.Forms.DialogResult]::OK) { Write-Outpu
       perguntar,
       abrirProcessando,
       selecionarArquivo,
-      abrirArquivo
+      abrirArquivo,
+      pedirNumero
     };
   }
 });
@@ -71591,56 +71638,39 @@ var require_readPgr = __commonJS({
   "src/readPgr.js"(exports2, module2) {
     var ExcelJS = require_excel();
     var config2 = require_config();
-    var { normalizar, textoCelula } = require_util5();
-    function localizarCabecalho(ws) {
-      const alvo = Object.fromEntries(config2.colunas.map((c) => [c.chave, normalizar(c.cabecalho)]));
-      let melhor = { linha: 0, cols: {} };
-      for (let r = 1; r <= 15; r++) {
-        const cols = {};
-        ws.getRow(r).eachCell({ includeEmpty: false }, (cell, n) => {
-          const t = normalizar(textoCelula(cell));
-          for (const k of Object.keys(alvo)) if (t === alvo[k] && cols[k] === void 0) cols[k] = n;
-        });
-        if (Object.keys(cols).length > Object.keys(melhor.cols).length) melhor = { linha: r, cols };
-      }
-      const faltando = config2.colunas.filter((c) => melhor.cols[c.chave] === void 0).map((c) => c.cabecalho);
-      return { ...melhor, faltando };
-    }
+    var { textoCelula } = require_util5();
     async function lerPlanilha2(arquivoXlsx) {
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.readFile(arquivoXlsx);
-      let ultimoErro = "Nenhuma aba encontrada.";
-      for (const ws of wb.worksheets) {
-        const loc = localizarCabecalho(ws);
-        if (loc.faltando.length) {
-          ultimoErro = `Aba "${ws.name}": faltam os cabe\xE7alhos: ${loc.faltando.join(", ")}`;
-          continue;
-        }
-        return extrair(ws, loc);
+      const ws = wb.worksheets[0];
+      if (!ws) {
+        throw new Error("Nenhuma aba encontrada na planilha.");
       }
-      throw new Error("N\xE3o encontrei a aba com os cabe\xE7alhos do PGR. " + ultimoErro);
+      return extrair(ws);
     }
-    function extrair(ws, loc) {
+    function extrair(ws) {
       const linhas = [];
-      const tituloOrgao = normalizar(config2.colunas[0].cabecalho);
+      const linhaInicial = config2.linhaInicioDados || 5;
       let vazias = 0;
-      for (let r = loc.linha + 1; r <= ws.rowCount && vazias < config2.linhasVaziasParaParar; r++) {
+      for (let r = linhaInicial; r <= ws.rowCount && vazias < config2.linhasVaziasParaParar; r++) {
         const row = ws.getRow(r);
         const reg = { linhaOriginal: r };
         let algum = false;
         for (const c of config2.colunas) {
-          reg[c.chave] = textoCelula(row.getCell(loc.cols[c.chave]));
+          reg[c.chave] = textoCelula(row.getCell(c.coluna));
           if (reg[c.chave]) algum = true;
         }
         if (!algum) {
           vazias++;
           continue;
         }
-        if (normalizar(reg.orgao) === tituloOrgao) continue;
         vazias = 0;
         linhas.push(reg);
       }
-      return { aba: ws.name, linhaCabecalho: loc.linha, linhas };
+      if (linhas.length === 0) {
+        throw new Error(`Nenhum dado encontrado na aba "${ws.name}" a partir da linha ${linhaInicial}.`);
+      }
+      return { aba: ws.name, linhaCabecalho: config2.linhaInicioCabecalho || 2, linhas };
     }
     module2.exports = { lerPlanilha: lerPlanilha2 };
   }
@@ -71676,7 +71706,6 @@ var require_grouping = __commonJS({
       for (const l2 of linhas) {
         const ag = normalizar(l2.agente);
         if (!ag) revisar.push(l2);
-        else if (ag.startsWith(config2.prefixoSemRisco)) semRisco.push(l2);
         else comRisco.push(l2);
       }
       const grupos = /* @__PURE__ */ new Map();
@@ -71852,6 +71881,25 @@ function mensagemAmigavel(e) {
 }
 async function main() {
   ui.reiniciarLog();
+  if (ui.win) {
+    let linhasCab;
+    try {
+      linhasCab = ui.pedirNumero(
+        "PGR \u2192 PCMSO",
+        "Quantas linhas o CABE\xC7ALHO da planilha ocupa?\n\nConte as linhas do cabe\xE7alho (mescladas) a partir da linha 2.\nExemplo: cabe\xE7alho indo da linha 2 at\xE9 a linha 4 = 3 linhas.",
+        config.linhasCabecalhoPadrao,
+        1,
+        config.linhasCabecalhoMax
+      );
+    } catch (e) {
+      ui.log("Janela de n\xFAmero de linhas falhou:", e.message);
+      ui.erro("N\xE3o consegui abrir a janela para informar as linhas do cabe\xE7alho.");
+      return 1;
+    }
+    if (linhasCab === null) return 0;
+    config.linhaInicioDados = config.linhasReservadas + linhasCab;
+    ui.log(`Cabe\xE7alho: ${linhasCab} linha(s); dados a partir da linha ${config.linhaInicioDados}.`);
+  }
   let entrada = arquivoDosArgumentos();
   if (!entrada) {
     try {

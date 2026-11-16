@@ -40,9 +40,13 @@ const codificar = script => Buffer.from(script, 'utf16le').toString('base64');
 
 // Executa e devolve o texto de saída. LANÇA ERRO se o PowerShell falhar/estiver bloqueado.
 function powershell(script) {
-  const out = execFileSync('powershell.exe', [...ARGS_PS, codificar(PS_BASE + script)],
-    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-  return out.replace(/[\r\n]+$/, '').trim();
+  const r = spawnSync('powershell.exe', [...ARGS_PS, codificar(PS_BASE + script)],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+  if (r.error) throw r.error;
+  if (r.status !== 0) {
+    throw new Error('PowerShell terminou com código ' + r.status + ': ' + String(r.stderr || '').trim());
+  }
+  return String(r.stdout || '').replace(/[\r\n]+$/, '').trim();
 }
 
 // ---------- caixas de mensagem ----------
@@ -103,7 +107,7 @@ $f.Controls.Add($p)
 `;
   let filho = null;
   try {
-    filho = spawn('powershell.exe', [...ARGS_PS, codificar(script)], { stdio: 'ignore' });
+    filho = spawn('powershell.exe', [...ARGS_PS, codificar(script)], { stdio: 'ignore', windowsHide: true });
     filho.on('error', () => {});
   } catch (e) { log('Janela "Processando" não abriu:', e.message); }
   return { fechar() { try { if (filho) filho.kill(); } catch {} } };

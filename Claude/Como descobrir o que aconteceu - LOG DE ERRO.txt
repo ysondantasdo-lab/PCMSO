@@ -1,0 +1,7 @@
+Como descobrir o que aconteceu
+
+O programa grava um log a cada execução. Aperte Win + R, digite %TEMP%\pgr-pcmso.log e dê Enter. Ele mostra:
+
+se a planilha foi lida e quantas linhas de dados encontrou;
+se o LibreOffice foi localizado;
+onde o arquivo foi salvo, ou o erro, se houve.
