@@ -220,7 +220,7 @@ if ($f.ShowDialog($o) -eq [System.Windows.Forms.DialogResult]::OK) { Write-Outpu
     function abrirArquivo(arquivo) {
       if (!win) return;
       try {
-        powershell(`Start-Process -FilePath ${txt(arquivo)}`);
+        powershell(`Start-Process -FilePath (${txt(arquivo)})`);
       } catch (e) {
         log("N\xE3o foi poss\xEDvel abrir o arquivo:", e.message);
       }
