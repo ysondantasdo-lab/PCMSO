@@ -113,6 +113,11 @@ Add-Type -AssemblyName System.Drawing
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $o = New-Object System.Windows.Forms.Form
 $o.TopMost = $true
+$o.ShowInTaskbar = $false
+$o.Opacity = 0
+$o.StartPosition = 'CenterScreen'
+$o.Show()
+$o.Activate()
 `;
     var ARGS_PS = ["-NoProfile", "-NonInteractive", "-STA", "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-EncodedCommand"];
     var codificar = (script) => Buffer.from(script, "utf16le").toString("base64");
@@ -120,9 +125,10 @@ $o.TopMost = $true
       const r = spawnSync(
         "powershell.exe",
         [...ARGS_PS, codificar(PS_BASE + script)],
-        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], windowsHide: true }
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], windowsHide: true, timeout: 5 * 60 * 1e3 }
       );
       if (r.error) throw r.error;
+      log("[ps] c\xF3digo:", r.status, "| sa\xEDda:", String(r.stdout || "").trim(), "| erro:", String(r.stderr || "").trim());
       if (r.status !== 0) {
         throw new Error("PowerShell terminou com c\xF3digo " + r.status + ": " + String(r.stderr || "").trim());
       }
@@ -71909,6 +71915,7 @@ async function main() {
     try {
       entrada = await escolherArquivo();
     } catch (e) {
+      ui.log("Sele\xE7\xE3o retornou:", entrada || "(vazio / cancelado)");
       ui.log("Janela de sele\xE7\xE3o falhou:", e.message);
       ui.erro("N\xE3o consegui abrir a janela de sele\xE7\xE3o de arquivo.\n\nAlternativa: arraste a planilha do PGR e solte em cima do \xEDcone deste programa.");
       return 1;

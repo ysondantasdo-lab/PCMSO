@@ -132,7 +132,7 @@ if ($f.ShowDialog($o) -eq [System.Windows.Forms.DialogResult]::OK) { Write-Outpu
 // Abre um arquivo com o programa padrão do Windows (o Calc, no caso da .ods).
 function abrirArquivo(arquivo) {
   if (!win) return;
-  try { powershell(`Start-Process -FilePath ${txt(arquivo)}`); }
+  try { powershell(`Start-Process -FilePath (${txt(arquivo)})`); }
   catch (e) { log('Não foi possível abrir o arquivo:', e.message); }
 }
 
