@@ -1,87 +1,129 @@
-import ExcelJS from 'exceljs';
-import readline from 'readline/promises';
-import { stdin as input, stdout as output } from 'process';
-import open from 'open';
-import path from 'path';
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const config = require('./src/config');
+const ui = require('./src/ui');
+const { escolherArquivo } = require('./src/fileDialog');
+const { acharSoffice, pedirSoffice, converter } = require('./src/libreoffice');
+const { lerPlanilha } = require('./src/readPgr');
+const { agrupar } = require('./src/grouping');
+const { gerarPlanilha } = require('./src/writeWorkbook');
 
-// Configura o leitor de perguntas no terminal
-const rl = readline.createInterface({ input, output });
+const EXT_PLANILHA = ['.xlsx', '.xlsm', '.ods', '.xls'];
 
-async function processarPlanilha() {
-  try {
-    // 1. Solicita o caminho do arquivo ao usuário
-    let caminhoArquivo = await rl.question('Arraste a planilha Excel para cá ou digite o caminho completo: ');
-    
-    // Limpa aspas caso o usuário arraste o arquivo para o terminal
-    caminhoArquivo = caminhoArquivo.trim().replace(/^["']|["']$/g, '');
-
-    console.log('\nLendo a planilha...');
-    const workbookEntrada = new ExcelJS.Workbook();
-    await workbookEntrada.xlsx.readFile(caminhoArquivo);
-
-    // Pega a primeira aba da planilha
-    const abaEntrada = workbookEntrada.getWorksheet(1);
-
-    // 2. Pega o texto da célula A5
-    const textoCelulaA5 = abaEntrada.getCell('A5').text || 'SemTitulo';
-    // Remove caracteres inválidos para nome de arquivo (como / \ : * ? " < > |)
-    const nomeLimpoA5 = textoCelulaA5.replace(/[\\/:*?"<>|]/g, '_').trim();
-
-    // 3. Ler, Organizar e Agrupar os dados
-    // Exemplo: supondo que os dados comecem na linha 7 (Coluna A = Categoria, Coluna B = Valor)
-    const dadosAgrupados = {};
-
-    abaEntrada.eachRow((row, rowNumber) => {
-      if (rowNumber >= 7) { // Ajuste este número para a linha onde sua tabela começa
-        const categoria = row.getCell(1).text.trim(); // Coluna A
-        const valor = Number(row.getCell(2).value) || 0; // Coluna B
-
-        if (categoria) {
-          if (!dadosAgrupados[categoria]) {
-            dadosAgrupados[categoria] = 0;
-          }
-          dadosAgrupados[categoria] += valor;
-        }
-      }
-    });
-
-    // 4. Criar a nova planilha de saída
-    const workbookSaida = new ExcelJS.Workbook();
-    const abaSaida = workbookSaida.addWorksheet('Dados Agrupados');
-
-    // Cabeçalho da nova planilha
-    abaSaida.addRow(['Categoria (Agrupada)', 'Total Somado']);
-
-    // Ordena alfabeticamente e insere na nova planilha
-    const categoriasOrdenadas = Object.keys(dadosAgrupados).sort();
-    for (const cat of categoriasOrdenadas) {
-      abaSaida.addRow([cat, dadosAgrupados[cat]]);
-    }
-
-    // 5. Formatar a data de hoje (DD-MM-AAAA)
-    const hoje = new Date();
-    const dia = String(hoje.getDate()).padStart(2, '0');
-    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    const ano = hoje.getFullYear();
-    const dataFormatada = `${dia}-${mes}-${ano}`;
-
-    // Monta o nome final e salva na mesma pasta da planilha original
-    const pastaDestino = path.dirname(caminhoArquivo);
-    const nomeArquivoSaida = `${dataFormatada}_${nomeLimpoA5}.xlsx`;
-    const caminhoCompletoSaida = path.join(pastaDestino, nomeArquivoSaida);
-
-    await workbookSaida.xlsx.writeFile(caminhoCompletoSaida);
-    console.log(`\nSucesso! Arquivo salvo em:\n${caminhoCompletoSaida}`);
-
-    // 6. Abre o arquivo no programa padrão do sistema (LibreOffice Calc)
-    console.log('Abrindo no LibreOffice Calc...');
-    await open(caminhoCompletoSaida);
-
-  } catch (erro) {
-    console.error('\nOcorreu um erro:', erro.message);
-  } finally {
-    rl.close();
-  }
+// Arquivo passado ao programa: arrastado sobre o .exe, ou "Abrir com", ou linha de comando.
+function arquivoDosArgumentos() {
+  return process.argv.slice(1).find(a => EXT_PLANILHA.includes(path.extname(a).toLowerCase()) && fs.existsSync(a)) || null;
 }
 
-processarPlanilha();
+function mensagemAmigavel(e) {
+  if (e && ['EBUSY', 'EPERM', 'EACCES'].includes(e.code)) {
+    return 'Não consegui salvar o resultado.\n\nSe a planilha de resultado estiver aberta no Calc, feche-a e tente novamente. ' +
+           'Verifique também se você tem permissão para gravar na pasta da planilha.';
+  }
+  return (e && e.message) || String(e);
+}
+
+async function main() {
+  ui.reiniciarLog();
+
+    // 0) Quantas linhas o cabeçalho ocupa (começa na linha 2). Perguntado ANTES de escolher o arquivo.
+  if (ui.win) {
+    let linhasCab;
+    try {
+      linhasCab = ui.pedirNumero(
+        'PGR → PCMSO',
+        'Quantas linhas o CABEÇALHO da planilha ocupa?\n\n' +
+        'Conte as linhas do cabeçalho (mescladas) a partir da linha 2.\n' +
+        'Exemplo: cabeçalho indo da linha 2 até a linha 4 = 3 linhas.',
+        config.linhasCabecalhoPadrao, 1, config.linhasCabecalhoMax);
+    } catch (e) {
+      ui.log('Janela de número de linhas falhou:', e.message);
+      ui.erro('Não consegui abrir a janela para informar as linhas do cabeçalho.');
+      return 1;
+    }
+    if (linhasCab === null) return 0; // cancelou: encerra sem barulho
+    config.linhaInicioDados = config.linhasReservadas + linhasCab;
+    ui.log(`Cabeçalho: ${linhasCab} linha(s); dados a partir da linha ${config.linhaInicioDados}.`);
+  }
+
+  // 1) Arquivo: arrastado sobre o programa ou escolhido na janela
+  let entrada = arquivoDosArgumentos();
+  if (!entrada) {
+    try {
+      entrada = await escolherArquivo();
+    } catch (e) {
+      ui.log('Seleção retornou:', entrada || '(vazio / cancelado)');
+      ui.log('Janela de seleção falhou:', e.message);
+      ui.erro('Não consegui abrir a janela de seleção de arquivo.\n\n' +
+              'Alternativa: arraste a planilha do PGR e solte em cima do ícone deste programa.');
+      return 1;
+    }
+    if (!entrada) return 0; // cancelou: encerra sem barulho
+  }
+  if (!fs.existsSync(entrada)) throw new Error('Arquivo não encontrado: ' + entrada);
+  ui.log('Arquivo:', entrada);
+
+  // 2) .ods/.xls precisam do LibreOffice para virar .xlsx; garante que ele foi localizado
+  const ext = path.extname(entrada).toLowerCase();
+  const precisaConverter = ext !== '.xlsx' && ext !== '.xlsm';
+  if (precisaConverter && !pedirSoffice()) {
+    throw new Error('Esta planilha precisa ser convertida pelo LibreOffice, mas ele não foi encontrado.\n\n' +
+                    'Dica: abra a planilha no Calc, use "Salvar como" .xlsx e escolha o arquivo salvo.');
+  }
+
+  const processando = ui.abrirProcessando('Processando a planilha... aguarde.');
+  let r, saida, ods = null, tmp = null;
+  try {
+    let xlsx = entrada;
+    if (precisaConverter) {
+      ui.log('Convertendo para .xlsx com o LibreOffice...');
+      tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pgr-'));
+      xlsx = converter(entrada, 'xlsx', tmp);
+    }
+
+    // 3) Ler (mescladas já resolvidas) e agrupar
+    const lido = await lerPlanilha(xlsx);
+    ui.log(`Aba "${lido.aba}": ${lido.linhas.length} linhas de dados.`);
+    r = agrupar(lido.linhas);
+
+    // 4) Gerar saída na mesma pasta do arquivo original
+    const base = path.basename(entrada, path.extname(entrada));
+    saida = path.join(path.dirname(entrada), `${base}_GH_PCMSO.xlsx`);
+    await gerarPlanilha(r, saida);
+
+    // 5) Cópia .ods (formato nativo do Calc), se o LibreOffice estiver disponível
+    if (config.gerarOds && acharSoffice()) {
+      try { ods = converter(saida, 'ods', path.dirname(saida)); }
+      catch (e) { ui.log('Não foi possível gerar a cópia .ods:', e.message); }
+    }
+  } finally {
+    processando.fechar();
+    if (tmp) { try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {} }
+  }
+
+  r.resumo.forEach(g => ui.log(`${g.gh}  ${g.agente} | ${g.exposicao} -> ${g.nLinhas} linhas, ${g.cargos.length} cargos`));
+  r.avisos.forEach(a => ui.log('AVISO:', a));
+
+  // 6) Resultado
+  const MAX_AVISOS = 8;
+  let msg = 'Concluído!\n\n' +
+    `Grupos homogêneos (GH): ${r.resumo.length}\n` +
+    `Linhas com risco: ${r.comRisco.length}   |   Sem fator de risco: ${r.semRisco.length}   |   Para revisar: ${r.revisar.length}\n\n` +
+    'Arquivo gerado:\n' + (ods || saida) + (ods ? '\n(uma cópia em .xlsx também foi salva na mesma pasta)' : '');
+  if (r.avisos.length) {
+    msg += `\n\nAtenção — ${r.avisos.length} aviso(s):\n` + r.avisos.slice(0, MAX_AVISOS).map(a => '• ' + a).join('\n');
+    if (r.avisos.length > MAX_AVISOS) msg += `\n• ...e mais ${r.avisos.length - MAX_AVISOS}.`;
+  }
+  msg += '\n\nDeseja abrir a planilha agora?';
+  if (ui.perguntar(msg)) ui.abrirArquivo(ods || saida);
+  return 0;
+}
+
+main()
+  .then(codigo => process.exit(codigo || 0))
+  .catch(e => {
+    ui.log('ERRO:', e && e.stack || e);
+    ui.erro('Ocorreu um problema ao processar a planilha.\n\n' + mensagemAmigavel(e));
+    process.exit(1);
+  });

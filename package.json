@@ -1,17 +1,19 @@
 {
-  "name": "programa-pcmso",
+  "name": "pgr-para-pcmso",
   "version": "1.0.0",
-  "description": "",
+  "description": "Lê a planilha de riscos do PGR e gera planilha com Grupos Homogêneos de Exposição (GH) para o PCMSO",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "build": "node build.js",
+    "build:debug": "node build.js --console"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
-    "exceljs": "^4.4.0",
-    "open": "^11.0.4"
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "postject": "^1.0.0-alpha.6"
   }
 }
